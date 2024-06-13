@@ -1,0 +1,28 @@
+{
+  "name": "fullstack_part3-1",
+  "version": "1.0.0",
+  "description": "Fullstack course part 3 seperate repo for backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "\"echo \\\"Error: no test specified\\\" && exit 1\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bjorncarlsson94/fullstack_part3-1.git"
+  },
+  "author": "Bjorn Carlsson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bjorncarlsson94/fullstack_part3-1/issues"
+  },
+  "homepage": "https://github.com/bjorncarlsson94/fullstack_part3-1#readme",
+  "dependencies": {
+    "express": "^4.19.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.3"
+  }
+}
