@@ -13,3 +13,19 @@ Content-Type: application/json
     "name": "Bjorn Carlsson",
     "number": "010099-119"
 }
+
+GET https://phonebook-app-bjorn.onrender.com/api/persons/2
+
+###
+
+DELETE https://phonebook-app-bjorn.onrender.com/api/persons/4943
+
+###
+
+POST https://phonebook-app-bjorn.onrender.com/api/persons
+Content-Type: application/json
+
+{
+    "name": "Bjorn Carlsson2",
+    "number": "010099-119"
+}

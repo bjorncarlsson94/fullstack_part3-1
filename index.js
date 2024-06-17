@@ -46,7 +46,11 @@ let phonebook = [
 
 
 app.get('/', (request, response) => {
-    response.send('<h1>Hello World!</h1>')
+    response.send(`<div>
+        <h1>The best phonebook app ever</h1>
+        <p>Type /api/persons in the url field to go to the phonebook</p>
+        </div>`
+    )
 })
 
 
