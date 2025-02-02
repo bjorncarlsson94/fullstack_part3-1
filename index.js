@@ -1,9 +1,10 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 
-
 const app = express()
+const phoneEntry = require('./models/phoneEntries')
 
 
 const requestLogger = (request, response, next) => {
@@ -24,29 +25,7 @@ app.use(requestLogger)
 app.use(cors())
 app.use(express.static('dist'))
 
-let phonebook = [
-    { 
-      "id": 1,
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": 2,
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": 3,
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": 4,
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
-
+let phonebook = []
 
 app.get('/', (request, response) => {
     response.send(`<div>
@@ -56,9 +35,10 @@ app.get('/', (request, response) => {
     )
 })
 
-
 app.get('/api/persons', (request, response) => {
-    response.json(phonebook)
+    phoneEntry.find({}).then(entry => {
+        response.json(entry)
+    })
 })
 
 app.get('/info', (request, response) => {
@@ -79,7 +59,7 @@ app.get('/info', (request, response) => {
 app.get('/api/persons/:id', (request, response) => {
     //console.log(request.params.id)
     const id = request.params.id;
-    const person = phonebook.find(person => person.id == id)
+    const person = phoneEntry.findbyId(person => person.id == id)
 
     if (person){
         response.json(person)
@@ -89,34 +69,29 @@ app.get('/api/persons/:id', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-    //console.log(request.params.id)
-    const id = Number(request.params.id);
-    phonebook = phonebook.filter(person => person.id !== id)
-
+    console.log("id: ", request.params.id)
+    // const id = Number(request.params.id);
+    phoneEntry.findById(request.params.id).then(response2 =>
+        phoneEntry.findByIdAndDelete(response2._id))
     response.status(204).end()
 })
 
-const generateId = () => {
-    return Math.floor(Math.random()*10000);
-}
 
 app.post('/api/persons', (request, response) => {
     const newPerson = request.body;
-    newPerson.id = generateId();
 
     if (!newPerson.name || !newPerson.number) {
         return response.status(400).json({
             error: "content missing"})
     } 
-    else if (phonebook.find(person => person.name.includes(newPerson.name))){
-        return response.status(400).json({
-            error: "name must be unique"
-        })
-    }
+    const entry = new phoneEntry({
+        name: newPerson.name,
+        number: newPerson.number
+    })
+    entry.save().then(savedPerson => {
+        response.json(savedPerson)
+    })
 
-    phonebook = phonebook.concat(newPerson)
-
-    response.json(newPerson)
 })
 
 
