@@ -25,15 +25,13 @@ app.use(requestLogger)
 app.use(cors())
 app.use(express.static('dist'))
 
-let phonebook = []
-
-app.get('/', (request, response) => {
-    response.send(`<div>
-        <h1>The best phonebook app ever</h1>
-        <p>Type /api/persons in the url field to go to the phonebook</p>
-        </div>`
-    )
-})
+// app.get('/', (request, response) => {
+//     response.send(`<div>
+//         <h1>The best phonebook app ever</h1>
+//         <p>Type /api/persons in the url field to go to the phonebook</p>
+//         </div>`
+//     )
+// })
 
 app.get('/api/persons', (request, response) => {
     phoneEntry.find({}).then(entry => {
@@ -41,49 +39,49 @@ app.get('/api/persons', (request, response) => {
     })
 })
 
-app.get('/info', (request, response) => {
-    const getNumber = () => {
-        return phonebook.length
-    }
+app.get('/info', (request, response, next) => {
     const currentDate = Date(Date.now())
     currentDate.toString()
-    const output =  `<div> 
-        <div>Phonebook has info for ${getNumber()} people
+
+    phoneEntry.countDocuments({})
+    .then(count => {
+        const output =  `<div> 
+        <div>Phonebook has info for ${count} people
         </div>
         <br/>
         <div>${currentDate}</div>
         </div>`
-    response.send(output)
+        response.send(output)
+    })
+    .catch((error) => next(error))
 })
 
-app.get('/api/persons/:id', (request, response) => {
-    //console.log(request.params.id)
-    const id = request.params.id;
-    const person = phoneEntry.findbyId(person => person.id == id)
-
-    if (person){
-        response.json(person)
-    } else{
-        response.send("No such person exists").end()
-    }
+app.get('/api/persons/:id', (request, response, next) => {
+    phoneEntry.findById(request.params.id)
+    .then(person => {
+        if (person){
+            response.json(person)
+        } else{
+            response.send("No such person exists").end()
+        }
+    })
+    .catch(error => next(error))
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-    console.log("id: ", request.params.id)
-    // const id = Number(request.params.id);
-    phoneEntry.findById(request.params.id).then(response2 =>
-        phoneEntry.findByIdAndDelete(response2._id))
-    response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+    phoneEntry.findById(request.params.id)
+    .then(response2 => phoneEntry.findByIdAndDelete(response2._id))
+    .then(response.status(204).end())
+    .catch(error => next(error))
 })
+/*
+^Strange behaviour where findByIdAndDelete(request.params.id) didn't work as standalone. 
+Probably something fishy with how I pass it into the app.delete from the FE.
+*/
 
-
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const newPerson = request.body;
 
-    if (!newPerson.name || !newPerson.number) {
-        return response.status(400).json({
-            error: "content missing"})
-    } 
     const entry = new phoneEntry({
         name: newPerson.name,
         number: newPerson.number
@@ -91,15 +89,43 @@ app.post('/api/persons', (request, response) => {
     entry.save().then(savedPerson => {
         response.json(savedPerson)
     })
-
+    .catch(error => next(error))
 })
 
+app.put('/api/persons/:id', (request, response, next) => {
+    const person = request.body
+    console.log(person)
+    
+    const entry = {
+        name: person.name,
+        number: person.number,
+    }
+  
+    phoneEntry.findByIdAndUpdate(request.params.id, entry, { new: true })
+      .then(updatedPerson => {
+        response.json(updatedPerson)
+      })
+      .catch(error => next(error))
+})
 
 const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
   }
   
 app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({error: 'malformatted id'})
+    }
+    else if (error.name === 'ValidationError') {
+        return response.status(400).send({ error: error.message})
+    }
+    next(error)
+}
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
